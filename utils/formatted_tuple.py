@@ -37,7 +37,10 @@ class FormattedTuple(object):
 
     @classmethod
     def _make(cls, data):
-        instance = cls.namedtuple._make(cls.struct.unpack_from(data[: cls._size()]))
+        from .ints_to_bytes import _byte_view  # local import to avoid cycle
+
+        buffer = _byte_view(data)
+        instance = cls.namedtuple._make(cls.struct.unpack_from(buffer))
         return cls.post_make(instance)
 
     @classmethod

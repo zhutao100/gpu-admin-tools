@@ -22,40 +22,92 @@
 #
 
 import array
-from collections.abc import ByteString
+import struct
 import sys
+from collections.abc import ByteString
+
+_INT_SIZE_TO_FORMAT = {1: "B", 2: "H", 4: "I", 8: "Q"}
+_STRUCT_BY_SIZE = {size: struct.Struct(f"={fmt}") for size, fmt in _INT_SIZE_TO_FORMAT.items()}
+
+
+def _require_int_size(size: int) -> None:
+    if size not in _INT_SIZE_TO_FORMAT:
+        raise AssertionError(f"Unhandled size {size}")
+
+
+def _byte_view(data) -> memoryview:
+    if isinstance(data, memoryview):
+        view = data
+    else:
+        try:
+            view = memoryview(data)
+        except TypeError:
+            view = memoryview(bytes(data))
+
+    if not view.contiguous:
+        view = memoryview(bytes(view))
+
+    if view.format != "B":
+        try:
+            view = view.cast("B")
+        except TypeError:
+            view = memoryview(bytes(view))
+
+    return view
 
 
 def ints_from_data(data, size):
-    return [
-        int.from_bytes(data[i: i + size], byteorder=sys.byteorder)
-        for i in range(0, len(data), size)
-    ]
+    _require_int_size(size)
+    view = _byte_view(data)
+
+    if view.nbytes % size != 0:
+        raise struct.error(f"unpack requires a buffer of {size} bytes")
+
+    if size == 1:
+        return list(view)
+
+    return view.cast(_INT_SIZE_TO_FORMAT[size]).tolist()
 
 
 def int_from_data(data, size):
-    del size  # unused
-    return int.from_bytes(data, byteorder=sys.byteorder)
+    _require_int_size(size)
+
+    if isinstance(data, (bytes, bytearray)):
+        if len(data) != size:
+            raise struct.error(f"unpack requires a buffer of {size} bytes")
+        if size == 1:
+            return data[0]
+        return _STRUCT_BY_SIZE[size].unpack(data)[0]
+
+    view = _byte_view(data)
+
+    if view.nbytes != size:
+        raise struct.error(f"unpack requires a buffer of {size} bytes")
+
+    if size == 1:
+        return view[0]
+
+    return _STRUCT_BY_SIZE[size].unpack_from(view)[0]
 
 
 def data_from_int(integer, size=4):
+    _require_int_size(size)
     return integer.to_bytes(size, byteorder=sys.byteorder)
 
 
-def bytearray_view_from_int_array(int_array: list[int], type_code: str = "I") -> ByteString:
-    a = array.array(type_code)
-    a.fromlist(int_array)
-    return memoryview(a.tobytes()).toreadonly()
+def bytearray_view_from_int_array(int_array, type_code: str = "I") -> ByteString:
+    arr = array.array(type_code, int_array)
+    return memoryview(arr).cast("B").toreadonly()
 
 
-def array_view_from_bytearray(ba, type_code: str = 'I') -> ByteString:
-    a = array.array(type_code)
-    a.frombytes(ba)
-    return memoryview(a).toreadonly()
+def array_view_from_bytearray(ba, type_code: str = "I") -> ByteString:
+    arr = array.array(type_code)
+    arr.frombytes(_byte_view(ba))
+    return memoryview(arr).toreadonly()
 
 
 def read_ints_from_path(path, offset, int_size, int_num=-1):
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         f.seek(offset, 0)
         if int_num == -1:
             size = -1
