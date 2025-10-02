@@ -1,0 +1,13 @@
+ __pycache__/
+*.pyc
+
+.vscode/
+.venv/
+
+.DS_Store
+*.log
+*.tmp
+*~
+
+!README.md
+*.md
