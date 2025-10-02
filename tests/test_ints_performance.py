@@ -4,9 +4,7 @@ import time
 import pytest
 
 # New, optimized implementations from the codebase
-from utils.ints_to_bytes import (
-    bytearray_view_from_int_array as bytearray_view_from_int_array_new,
-)
+from utils.ints_to_bytes import bytearray_view_from_ints as bytearray_view_from_ints_new
 from utils.ints_to_bytes import data_from_int as data_from_int_new
 from utils.ints_to_bytes import int_from_data as int_from_data_new
 from utils.ints_to_bytes import ints_from_data as ints_from_data_new
@@ -131,7 +129,7 @@ def test_array_creation_performance_comparison():
 
     start_new = time.perf_counter()
     for _ in range(iterations):
-        bytearray_view_from_int_array_new(int_list)
+        bytearray_view_from_ints_new(int_list)
     duration_new = time.perf_counter() - start_new
 
     print(f"\nPerformance for array creation ({iterations} iterations on 10k ints):")

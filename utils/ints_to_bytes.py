@@ -24,7 +24,8 @@
 import array
 import struct
 import sys
-from collections.abc import ByteString
+from collections.abc import Iterable
+from typing import Any
 
 _INT_SIZE_TO_FORMAT = {1: "B", 2: "H", 4: "I", 8: "Q"}
 _STRUCT_BY_SIZE = {size: struct.Struct(f"={fmt}") for size, fmt in _INT_SIZE_TO_FORMAT.items()}
@@ -35,7 +36,7 @@ def _require_int_size(size: int) -> None:
         raise AssertionError(f"Unhandled size {size}")
 
 
-def _byte_view(data) -> memoryview:
+def _byte_view(data: Any) -> memoryview:
     if isinstance(data, memoryview):
         view = data
     else:
@@ -56,7 +57,7 @@ def _byte_view(data) -> memoryview:
     return view
 
 
-def ints_from_data(data, size):
+def ints_from_data(data: Any, size: int) -> list[int]:
     _require_int_size(size)
     view = _byte_view(data)
 
@@ -69,7 +70,7 @@ def ints_from_data(data, size):
     return view.cast(_INT_SIZE_TO_FORMAT[size]).tolist()
 
 
-def int_from_data(data, size):
+def int_from_data(data: Any, size: int) -> int:
     _require_int_size(size)
 
     if isinstance(data, (bytes, bytearray)):
@@ -90,23 +91,23 @@ def int_from_data(data, size):
     return _STRUCT_BY_SIZE[size].unpack_from(view)[0]
 
 
-def data_from_int(integer, size=4):
+def data_from_int(integer: int, size: int = 4) -> bytes:
     _require_int_size(size)
     return integer.to_bytes(size, byteorder=sys.byteorder)
 
 
-def bytearray_view_from_int_array(int_array, type_code: str = "I") -> ByteString:
+def bytearray_view_from_ints(int_array: Iterable[int], type_code: str = "I") -> memoryview:
     arr = array.array(type_code, int_array)
     return memoryview(arr).cast("B").toreadonly()
 
 
-def array_view_from_bytearray(ba, type_code: str = "I") -> ByteString:
+def array_view_from_bytearray(ba: Any, type_code: str = "I") -> memoryview:
     arr = array.array(type_code)
     arr.frombytes(_byte_view(ba))
     return memoryview(arr).toreadonly()
 
 
-def read_ints_from_path(path, offset, int_size, int_num=-1):
+def read_ints_from_path(path: str, offset: int, int_size: int, int_num: int = -1) -> list[int]:
     with open(path, "rb") as f:
         f.seek(offset, 0)
         if int_num == -1:

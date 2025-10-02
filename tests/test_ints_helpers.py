@@ -8,7 +8,7 @@ import pytest
 from utils.formatted_tuple import FormattedTuple
 from utils.ints_to_bytes import (
     array_view_from_bytearray,
-    bytearray_view_from_int_array,
+    bytearray_view_from_ints,
     data_from_int,
     int_from_data,
     ints_from_data,
@@ -59,13 +59,13 @@ def test_int_helpers_reject_unknown_sizes():
 
 def test_bytearray_view_from_int_array_accepts_iterables():
     values = (0x01020304, 0x05060708)
-    view_from_tuple = bytearray_view_from_int_array(values)
+    view_from_tuple = bytearray_view_from_ints(values)
     assert isinstance(view_from_tuple, memoryview)
     assert view_from_tuple.readonly
     assert view_from_tuple.tolist() == [4, 3, 2, 1, 8, 7, 6, 5]
 
     gen_values = (i for i in values)
-    view_from_gen = bytearray_view_from_int_array(gen_values)
+    view_from_gen = bytearray_view_from_ints(gen_values)
     assert view_from_gen.tolist() == [4, 3, 2, 1, 8, 7, 6, 5]
 
 
@@ -80,11 +80,11 @@ def test_array_view_from_bytearray_returns_int_view():
 def test_nice_struct_from_int_array_with_non_list():
     values = (0x01020304, 0x05060708)
     instance = DemoStruct()
-    instance.from_int_array(values)
+    instance.from_ints(values)
     assert instance.a == values[0]
     assert instance.b == values[1]
 
-    instance.from_int_array(i for i in values)
+    instance.from_ints(i for i in values)
     assert instance.a == values[0]
     assert instance.b == values[1]
 

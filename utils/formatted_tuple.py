@@ -36,7 +36,7 @@ class FormattedTuple(object):
         return instance
 
     @classmethod
-    def _make(cls, data):
+    def _make(cls, data: object):
         from .ints_to_bytes import _byte_view  # local import to avoid cycle
 
         buffer = _byte_view(data)

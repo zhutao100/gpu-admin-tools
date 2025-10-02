@@ -120,7 +120,7 @@ class MseRpc:
 
         while True:
             resp_data = self.mnoc.receive_data()
-            mse_header.from_int_array(resp_data[:4])
+            mse_header.from_ints(resp_data[:4])
             if mse_header.is_response:
                 return resp_data[4:]
             else:
@@ -168,5 +168,5 @@ class MseRpc:
     def get_platform_info(self):
         platform_info_raw = self.send_cmd(2, 0x30, [])
         platform_info = GetPlatformInfoRsp()
-        platform_info.from_int_array(platform_info_raw)
+        platform_info.from_ints(platform_info_raw)
         return platform_info
