@@ -21,9 +21,11 @@
 # DEALINGS IN THE SOFTWARE.
 #
 
+
 def formatted_tuple_from_data(fmtTuple, data, offset=0):
     size = fmtTuple._size()
     return fmtTuple._make(data[offset : offset + size])
+
 
 class FormattedTuple(object):
     namedtuple = None
@@ -35,9 +37,7 @@ class FormattedTuple(object):
 
     @classmethod
     def _make(cls, data):
-        size = cls._size()
-        # Wrap data in bytes() for python 2.6 compatibility
-        instance = cls.namedtuple._make(cls.struct.unpack_from(bytes(data)))
+        instance = cls.namedtuple._make(cls.struct.unpack_from(data[: cls._size()]))
         return cls.post_make(instance)
 
     @classmethod

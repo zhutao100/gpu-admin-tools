@@ -21,11 +21,13 @@
 # DEALINGS IN THE SOFTWARE.
 #
 
+import atexit
+from logging import debug
+
 from utils import NiceStruct
+
 from .mnoc import GpuMnoc
 
-from logging import debug
-import atexit
 
 class MseHeader(NiceStruct):
     _fields_ = [
@@ -107,7 +109,7 @@ class MseRpc:
         mse_header.ssid = 9
         mse_header.dsid = 4
 
-        data_to_send = mse_header.to_int_array() + cmd_data
+        data_to_send = mse_header.to_int_list() + cmd_data
 
         self.mnoc.send_data(data_to_send)
 
@@ -168,4 +170,3 @@ class MseRpc:
         platform_info = GetPlatformInfoRsp()
         platform_info.from_int_array(platform_info_raw)
         return platform_info
-

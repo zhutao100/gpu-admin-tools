@@ -21,51 +21,38 @@
 # DEALINGS IN THE SOFTWARE.
 #
 
-import struct
+import array
+from collections.abc import ByteString
+import sys
 
-def _struct_fmt(size):
-   if size == 1:
-       return "B"
-   elif size == 2:
-       return "=H"
-   elif size == 4:
-       return "=I"
-   elif size == 8:
-       return "=Q"
-   else:
-       assert 0, "Unhandled size %d" % size
 
 def ints_from_data(data, size):
-    fmt = _struct_fmt(size)
-    # Wrap data in bytes() for python 2.6 compatibility
-    data = bytes(data)
-    ints = []
-    for offset in range(0, len(data), size):
-        ints.append(struct.unpack(fmt, data[offset : offset + size])[0])
+    return [
+        int.from_bytes(data[i: i + size], byteorder=sys.byteorder)
+        for i in range(0, len(data), size)
+    ]
 
-    return ints
 
 def int_from_data(data, size):
-    fmt = _struct_fmt(size)
-    # Wrap data in bytes() for python 2.6 compatibility
-    return struct.unpack(fmt, bytes(data))[0]
+    del size  # unused
+    return int.from_bytes(data, byteorder=sys.byteorder)
+
 
 def data_from_int(integer, size=4):
-    fmt = _struct_fmt(size)
-    return struct.pack(fmt, integer)
+    return integer.to_bytes(size, byteorder=sys.byteorder)
 
-def bytearray_from_ints(array_of_ints, size=4):
-    ba = bytearray()
-    for i in array_of_ints:
-        ba.extend(data_from_int(i, size))
-    return ba
 
-def ints_from_bytearray(ba, int_size):
-    ints = []
-    for i in range(0, len(ba), int_size):
-        data = ba[i:int_size]
-        ints.append(int_from_data(ba[i : i + int_size], int_size))
-    return ints
+def bytearray_view_from_int_array(int_array: list[int], type_code: str = "I") -> ByteString:
+    a = array.array(type_code)
+    a.fromlist(int_array)
+    return memoryview(a.tobytes()).toreadonly()
+
+
+def array_view_from_bytearray(ba, type_code: str = 'I') -> ByteString:
+    a = array.array(type_code)
+    a.frombytes(ba)
+    return memoryview(a).toreadonly()
+
 
 def read_ints_from_path(path, offset, int_size, int_num=-1):
     with open(path, 'rb') as f:
